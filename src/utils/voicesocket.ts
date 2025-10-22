@@ -83,7 +83,7 @@ class VoiceSocket {
         }
 
         // Use direct WebSocket URL as requested
-        const wsUrl = "ws://localhost:8000/api/ws";
+        const wsUrl = "ws://195.35.21.217:8000/api/ws";
 
         try {
             this.socket = new WebSocket(wsUrl);
