@@ -8,12 +8,33 @@ import {
     useRef,
     useState,
 } from "react";
-import RecordRTC from "recordrtc";
 import VoiceSocket, {
     type LogLevel,
     type OutgoingAudioPayload,
     type ServerMessage,
 } from "@/utils/voicesocket";
+
+type RecordRTCConstructor = new (
+    stream: MediaStream,
+    config: {
+        type: string;
+        mimeType: string;
+        recorderType?: unknown;
+        numberOfAudioChannels: number;
+        desiredSampRate: number;
+        bufferSize: number;
+        disableLogs: boolean;
+        timeSlice: number;
+        ondataavailable: (blob: Blob) => void;
+    }
+) => {
+    startRecording: () => void;
+    stopRecording: (callback: () => void) => void;
+};
+
+type RecordRTCModule = RecordRTCConstructor & {
+    StereoAudioRecorder: unknown;
+};
 
 type AudioRecorderProps = {
     onVoiceSocketConnected?: () => void;
@@ -39,9 +60,10 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(
             { id: number; text: string; level: LogLevel }[]
         >([]);
 
-        const recorderRef = useRef<RecordRTC | null>(null);
+        const recorderRef = useRef<InstanceType<RecordRTCConstructor> | null>(null);
         const streamRef = useRef<MediaStream | null>(null);
         const socketRef = useRef<VoiceSocket | null>(null);
+        const RecordRTCRef = useRef<RecordRTCModule | null>(null);
         const isTransmittingRef = useRef(false);
         const audioContextRef = useRef<AudioContext | null>(null);
         const chunksSentRef = useRef(0);
@@ -232,6 +254,13 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(
             chunksSentRef.current = 0;
 
             try {
+                if (!RecordRTCRef.current) {
+                    const RecordRTCModule = await import("recordrtc");
+                    RecordRTCRef.current = RecordRTCModule.default as RecordRTCModule;
+                }
+
+                const RecordRTC = RecordRTCRef.current as RecordRTCModule;
+
                 const stream = await navigator.mediaDevices.getUserMedia({
                     audio: {
                         echoCancellation: true,
