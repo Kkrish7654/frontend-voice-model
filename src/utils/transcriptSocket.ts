@@ -14,7 +14,7 @@ export default class TranscriptSocket {
     private onErrorCallback: ((event: Event) => void) | null = null;
 
     constructor() {
-        this.socket = new WebSocket("ws://195.35.21.217:8000/api/transcription");
+        this.socket = new WebSocket("wss://dms.consainsights.com/api/transcription");
         this.socket.onopen = () => this.onOpenCallback?.();
         this.socket.onclose = () => this.onCloseCallback?.();
         this.socket.onerror = (event) => this.onErrorCallback?.(event);
